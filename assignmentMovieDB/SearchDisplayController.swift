@@ -83,7 +83,7 @@ class SearchDisplayController: UICollectionViewController, UICollectionViewDeleg
     }
 
     func searchMovies(){
-        //print("start searching movies...")
+        //print("start searching movies...") 
         // API: https://developers.themoviedb.org/3/search/search-movies
         let postData = NSData(data: "{}".data(using: String.Encoding.utf8)!)
         

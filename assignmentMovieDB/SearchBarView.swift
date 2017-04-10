@@ -8,7 +8,7 @@
 
 import UIKit
 
-class SearchBarView : UIView {
+class SearchBarView : UIView { 
     
     var searchDisplayController : SearchDisplayController?
     
