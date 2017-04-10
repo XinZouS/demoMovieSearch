@@ -101,7 +101,7 @@ class SearchDisplayController: UICollectionViewController, UICollectionViewDeleg
                 let httpResponse = response as? HTTPURLResponse
                 print(httpResponse)
             }
-        })
+        }) 
         
         dataTask.resume()
 

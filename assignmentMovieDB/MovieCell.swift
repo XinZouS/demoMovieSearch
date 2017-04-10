@@ -7,7 +7,7 @@
 //
 
 import UIKit
- 
+
 class MovieCell: UICollectionViewCell {
     
     override init(frame: CGRect) {
