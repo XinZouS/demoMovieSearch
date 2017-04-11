@@ -16,6 +16,8 @@ class SearchBarView : UIView {
         let t = UITextField()
         t.translatesAutoresizingMaskIntoConstraints = false
         t.font = UIFont.systemFont(ofSize: 16)
+        t.autocapitalizationType = .none
+        t.autocorrectionType = .no
         t.placeholder = "  Search key words..."
         t.backgroundColor = .white
         t.layer.cornerRadius = 6

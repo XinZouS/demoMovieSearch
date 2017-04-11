@@ -12,7 +12,15 @@ class SearchDisplayController: UICollectionViewController, UICollectionViewDeleg
 
     let cellId = "movieCellId"
     
+    var currPage : NSNumber = 1
+    
+    var movies : [Movie] = [Movie]()
+    var total_results : NSNumber = 0
+    var page   : NSNumber = 0 // JSON searching results' page
+    var total_pages : NSNumber = 0
+    
     let searchBarView = SearchBarView()
+    
     
     
     override func viewDidLoad() {
@@ -33,7 +41,7 @@ class SearchDisplayController: UICollectionViewController, UICollectionViewDeleg
     }
     
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return 6
+        return movies.count
     }
     
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -83,29 +91,70 @@ class SearchDisplayController: UICollectionViewController, UICollectionViewDeleg
     }
 
     func searchMovies(){
-        //print("start searching movies...") 
+        guard let keyWord = searchBarView.textField.text, keyWord != "" else {
+            showAlertWith(title: "Oops! Something miss", message: "Please type at least one keyword of the movie you want to find.")
+            return
+        }
         // API: https://developers.themoviedb.org/3/search/search-movies
         let postData = NSData(data: "{}".data(using: String.Encoding.utf8)!)
         
         // url demo: https://api.themoviedb.org/3/search/movie?api_key=<<api_key>>&language=en-US&page=1&include_adult=false
-        let nsUrl = NSURL(string: "https://api.themoviedb.org/3/search/movie?include_adult=false&page=1&language=en-US&api_key=%3C%3Capi_key%3E%3E")
-        var request = NSMutableURLRequest(url: nsUrl! as URL, cachePolicy: .useProtocolCachePolicy, timeoutInterval: 10.0) as URLRequest
+        let apiKey = "635cdfbf239eb6f85297d3777fbcda86"
+        let keyWordFormated = keyWord.replacingOccurrences(of: " ", with: "%20")
+        let urlString = "https://api.themoviedb.org/3/search/movie?api_key=\(apiKey)&language=en-US&query=\(keyWordFormated)&page=\(currPage)&include_adult=false"
+        guard let nsUrl = NSURL(string: urlString) else {
+            showAlertWith(title: "Is Keyword Right?", message: "Keywords are only allow letters and spaces, no numbers or other characters, please try again.")
+            return
+        }
+        var request = NSMutableURLRequest(url: nsUrl as! URL, cachePolicy: .useProtocolCachePolicy, timeoutInterval: 10.0) as URLRequest
         request.httpMethod = "GET"
         request.httpBody = postData as Data
         
+        loadDataBy(request)
+        
+    }
+    
+    private func loadDataBy(_ request: URLRequest){
+        
         let session = URLSession.shared
         let dataTask = session.dataTask(with: request, completionHandler: { (data, response, error) -> Void in
-            if (error != nil) {
-                print("get error when sending URL request: SearchDisplayControler.swift: ", error)
-            } else {
-                let httpResponse = response as? HTTPURLResponse
-                print(httpResponse)
+            guard let downloadContent = data, error == nil else {
+                print("get error when sending URL request: SearchDisplayControler.swift: ", error!)
+                return
             }
-        }) 
-        
+            do {
+                let json = try JSONSerialization.jsonObject(with: downloadContent, options: .mutableContainers) as! [String:AnyObject]
+                
+                self.total_results = json["total_results"] as? NSNumber ?? 0
+                print("total results: ", self.total_results)
+                if self.total_results == 0 {
+                    self.showAlertWith(title: "Oops, no result 😅", message: "We can not find any movie with the keyword. Please try other keywords.")
+                }
+                self.currPage = json["page"] as? NSNumber ?? 0
+                self.total_pages = json["total_pages"] as? NSNumber ?? 0
+                let movieResults = json["results"] as? [[String:AnyObject]] ?? [["Result":"get no result." as AnyObject]]
+                for getMovie in movieResults {
+                    print("---getMovies---", getMovie)
+                    let newMovie = Movie(dictionary: getMovie)
+                    self.movies.append(newMovie)
+                }
+                
+            }catch{
+                self.showAlertWith(title: "Data faild", message: "Get an error when trying to decode downloaded data. Please try again later.")
+            }
+            
+        })
         dataTask.resume()
-
+        
+//        DispatchQueue.main.async {
+//            if self.total_results == 0 {
+//                self.showAlertWith(title: "Oops, no result 😅", message: "We can not find any movie with the keyword. Please try other keywords.")
+//            }else{
+//                //self.collectionView?.reloadData()
+//            }
+//        }
     }
+    
     
     
     
