@@ -16,7 +16,7 @@ class SafeJsonObject : NSObject {
         let selector = NSSelectorFromString("set\(selectorStr):")
         let responds = self.responds(to: selector)
         if !responds {
-            print("can not find Movie setter from key:\(key) for: ", selectorStr)
+            //print("can not find Movie setter from key:\(key) for: ", selectorStr)
             return
         }
         super.setValue(value, forKey: key)

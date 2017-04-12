@@ -18,6 +18,7 @@ class SearchDisplayController: UICollectionViewController, UICollectionViewDeleg
     var total_results : NSNumber = 0
     var page   : NSNumber = 0 // JSON searching results' page
     var total_pages : NSNumber = 0
+    let imgBasicUrl = " http://image.tmdb.org/t/p/w185/"   // w185 is size for mobile
     
     let searchBarView = SearchBarView()
     
@@ -45,8 +46,8 @@ class SearchDisplayController: UICollectionViewController, UICollectionViewDeleg
     }
     
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: cellId, for: indexPath)
-        
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: cellId, for: indexPath) as! MovieCell
+        cell.movie = movies[indexPath.item]
         return cell
     }
     
@@ -56,15 +57,22 @@ class SearchDisplayController: UICollectionViewController, UICollectionViewDeleg
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
         return 1
     }
+
+    override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let selectedMovie = movies[indexPath.item]
+        let movieDetailController = MovieDetailController()
+        movieDetailController.movie = selectedMovie
+        navigationController?.pushViewController(movieDetailController, animated: true)
+    }
     
     private func setupNavigationBar(){
         navigationController?.hidesBarsOnSwipe = true
         
         let titleLabel = UILabel(frame: CGRect(x: 0, y: 0, width: 200, height: 30))
-        titleLabel.text = "My Movies"
+        titleLabel.text = "My MovieDB"
+        titleLabel.font = UIFont(name: "AmericanTypewriter", size: 23)
         titleLabel.textColor = .white
         titleLabel.textAlignment = .center
-        titleLabel.font = UIFont.systemFont(ofSize: 20)
         navigationItem.titleView = titleLabel
         
         navigationController?.navigationBar.isTranslucent = false
@@ -88,6 +96,9 @@ class SearchDisplayController: UICollectionViewController, UICollectionViewDeleg
     
     private func setupCollectionView(){
         collectionView?.backgroundColor = UIColor(white: 0.9, alpha: 1)
+        collectionView?.contentInset = UIEdgeInsets(top: 40, left: 0, bottom: 0, right: 0)
+        collectionView?.scrollIndicatorInsets = UIEdgeInsets(top: 40, left: 0, bottom: 5, right: 0)
+        collectionView?.alwaysBounceVertical = true
     }
 
     func searchMovies(){
@@ -98,7 +109,6 @@ class SearchDisplayController: UICollectionViewController, UICollectionViewDeleg
         // API: https://developers.themoviedb.org/3/search/search-movies
         let postData = NSData(data: "{}".data(using: String.Encoding.utf8)!)
         
-        // url demo: https://api.themoviedb.org/3/search/movie?api_key=<<api_key>>&language=en-US&page=1&include_adult=false
         let apiKey = "635cdfbf239eb6f85297d3777fbcda86"
         let keyWordFormated = keyWord.replacingOccurrences(of: " ", with: "%20")
         let urlString = "https://api.themoviedb.org/3/search/movie?api_key=\(apiKey)&language=en-US&query=\(keyWordFormated)&page=\(currPage)&include_adult=false"
@@ -110,11 +120,11 @@ class SearchDisplayController: UICollectionViewController, UICollectionViewDeleg
         request.httpMethod = "GET"
         request.httpBody = postData as Data
         
-        loadDataBy(request)
+        downloadMovieInfoBy(request)
         
     }
     
-    private func loadDataBy(_ request: URLRequest){
+    private func downloadMovieInfoBy(_ request: URLRequest){
         
         let session = URLSession.shared
         let dataTask = session.dataTask(with: request, completionHandler: { (data, response, error) -> Void in
@@ -126,17 +136,20 @@ class SearchDisplayController: UICollectionViewController, UICollectionViewDeleg
                 let json = try JSONSerialization.jsonObject(with: downloadContent, options: .mutableContainers) as! [String:AnyObject]
                 
                 self.total_results = json["total_results"] as? NSNumber ?? 0
-                print("total results: ", self.total_results)
-                if self.total_results == 0 {
-                    self.showAlertWith(title: "Oops, no result 😅", message: "We can not find any movie with the keyword. Please try other keywords.")
-                }
                 self.currPage = json["page"] as? NSNumber ?? 0
                 self.total_pages = json["total_pages"] as? NSNumber ?? 0
                 let movieResults = json["results"] as? [[String:AnyObject]] ?? [["Result":"get no result." as AnyObject]]
                 for getMovie in movieResults {
-                    print("---getMovies---", getMovie)
+                    //print("---getMovies---", getMovie)
                     let newMovie = Movie(dictionary: getMovie)
                     self.movies.append(newMovie)
+                }
+                DispatchQueue.main.async {
+                    if self.total_results == 0 {
+                        self.showAlertWith(title: "Oops, no result 😅", message: "We can not find any movie with the keyword. Please try other keywords.")
+                    }else{
+                        self.collectionView?.reloadData()
+                    }
                 }
                 
             }catch{
@@ -146,13 +159,6 @@ class SearchDisplayController: UICollectionViewController, UICollectionViewDeleg
         })
         dataTask.resume()
         
-//        DispatchQueue.main.async {
-//            if self.total_results == 0 {
-//                self.showAlertWith(title: "Oops, no result 😅", message: "We can not find any movie with the keyword. Please try other keywords.")
-//            }else{
-//                //self.collectionView?.reloadData()
-//            }
-//        }
     }
     
     
