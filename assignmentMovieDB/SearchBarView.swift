@@ -62,11 +62,14 @@ class SearchBarView : UIView {
     }
     
     func searchMovies(){
+        searchDisplayController?.currPage = 1
+        searchDisplayController?.total_pages = 0
         searchDisplayController?.movies = []
         searchDisplayController?.searchMovies()
     }
     
     func clearKeywordText(){
+        searchDisplayController?.collectionViewScrollTo(rowLocation: 0)
         textField.text = ""
     }
     

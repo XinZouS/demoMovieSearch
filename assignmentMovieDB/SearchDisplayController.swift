@@ -12,13 +12,12 @@ class SearchDisplayController: UICollectionViewController, UICollectionViewDeleg
 
     let cellId = "movieCellId"
     
-    var currPage : NSNumber = 1
+    var currPage : Int = 1
     
     var movies : [Movie] = [Movie]()
-    var total_results : NSNumber = 0
-    var page   : NSNumber = 0 // JSON searching results' page
-    var total_pages : NSNumber = 0
-    let imgBasicUrl = " http://image.tmdb.org/t/p/w185/"   // w185 is size for mobile
+    var total_results : Int = 0
+    var total_pages   : Int = 0
+    //let imgBasicUrl = " http://image.tmdb.org/t/p/w185/"   // w185 is size for mobile
     
     let searchBarView = SearchBarView()
     
@@ -57,6 +56,10 @@ class SearchDisplayController: UICollectionViewController, UICollectionViewDeleg
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
         return 1
     }
+    func collectionViewScrollTo(rowLocation:Int){
+        if movies.count < 1 { return }
+        self.collectionView?.scrollToItem(at: IndexPath(row: rowLocation, section: 0), at: .top, animated: true)
+    }
 
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let selectedMovie = movies[indexPath.item]
@@ -64,6 +67,15 @@ class SearchDisplayController: UICollectionViewController, UICollectionViewDeleg
         movieDetailController.movie = selectedMovie
         navigationController?.pushViewController(movieDetailController, animated: true)
     }
+    // for pull up to load more:
+    override func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        if indexPath.item == movies.count - 1, currPage <= total_pages {
+            //currPage += 1 // do it in searchMovies()
+            searchMovies()
+            print("====== search in page: ", currPage)
+        }
+    }
+    
     
     private func setupNavigationBar(){
         navigationController?.hidesBarsOnSwipe = true
@@ -100,6 +112,9 @@ class SearchDisplayController: UICollectionViewController, UICollectionViewDeleg
         collectionView?.scrollIndicatorInsets = UIEdgeInsets(top: 40, left: 0, bottom: 5, right: 0)
         collectionView?.alwaysBounceVertical = true
     }
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        collectionView?.collectionViewLayout.invalidateLayout()
+    }
 
     func searchMovies(){
         guard let keyWord = searchBarView.textField.text, keyWord != "" else {
@@ -116,7 +131,7 @@ class SearchDisplayController: UICollectionViewController, UICollectionViewDeleg
             showAlertWith(title: "Is Keyword Right?", message: "Keywords are only allow letters and spaces, no numbers or other characters, please try again.")
             return
         }
-        var request = NSMutableURLRequest(url: nsUrl as! URL, cachePolicy: .useProtocolCachePolicy, timeoutInterval: 10.0) as URLRequest
+        var request = NSMutableURLRequest(url: nsUrl as! URL, cachePolicy: .useProtocolCachePolicy, timeoutInterval: 5.0) as URLRequest
         request.httpMethod = "GET"
         request.httpBody = postData as Data
         
@@ -135,9 +150,8 @@ class SearchDisplayController: UICollectionViewController, UICollectionViewDeleg
             do {
                 let json = try JSONSerialization.jsonObject(with: downloadContent, options: .mutableContainers) as! [String:AnyObject]
                 
-                self.total_results = json["total_results"] as? NSNumber ?? 0
-                self.currPage = json["page"] as? NSNumber ?? 0
-                self.total_pages = json["total_pages"] as? NSNumber ?? 0
+                self.total_results = json["total_results"] as? Int ?? 0
+                self.total_pages = json["total_pages"] as? Int ?? 0
                 let movieResults = json["results"] as? [[String:AnyObject]] ?? [["Result":"get no result." as AnyObject]]
                 for getMovie in movieResults {
                     //print("---getMovies---", getMovie)
@@ -150,6 +164,9 @@ class SearchDisplayController: UICollectionViewController, UICollectionViewDeleg
                     }else{
                         self.collectionView?.reloadData()
                     }
+                }
+                if self.currPage == json["page"] as? Int, self.currPage <= self.total_pages {
+                    self.currPage += 1
                 }
                 
             }catch{
