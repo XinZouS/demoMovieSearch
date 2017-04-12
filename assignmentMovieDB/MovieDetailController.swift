@@ -75,8 +75,8 @@ class MovieDetailController : UIViewController {
     let overviewTextView : UITextView = {
         let t = UITextView()
         t.isEditable = false
-        t.font = UIFont.systemFont(ofSize: 18)
-        //t.backgroundColor = .yellow
+        t.isScrollEnabled = false
+        t.font = UIFont.systemFont(ofSize: 18)        
         return t
     }()
     var overviewTextViewHeightConstraint: NSLayoutConstraint?
@@ -132,7 +132,7 @@ class MovieDetailController : UIViewController {
         postImageViewHeightConstraint = postImageView.constraints[0]
         
         scrollView.addSubview(overviewTextView)
-        overviewTextView.addConstraints(left: scrL, top: postImageView.bottomAnchor, right: scrR, bottom: scrollView.bottomAnchor, leftConstent: 30, topConstent: 0, rightConstent: 30, bottomConstent: 0, width: 0, height: 300)
+        overviewTextView.addConstraints(left: scrL, top: postImageView.bottomAnchor, right: scrR, bottom: scrollView.bottomAnchor, leftConstent: 30, topConstent: 10, rightConstent: 30, bottomConstent: 0, width: 0, height: 300)
         overviewTextViewHeightConstraint = overviewTextView.constraints[0]
     }
     
@@ -186,10 +186,10 @@ class MovieDetailController : UIViewController {
     private func setupOverviewTextView(){
         overviewTextView.text = movie?.overview ?? "Oops! No overview for this movie 😂"
         let size = CGSize(width: (view.frame.width - 40), height: 300)
-        let option = NSStringDrawingOptions.usesFontLeading.union(.usesFontLeading) 
-        let attributes = [NSFontAttributeName: UIFont.systemFont(ofSize: 18)]
+        let option = NSStringDrawingOptions.usesFontLeading.union(.usesLineFragmentOrigin)
+        let attributes = [NSFontAttributeName: UIFont.systemFont(ofSize: 20)]
         let estimateRect = NSString(string: overviewTextView.text!).boundingRect(with: size, options: option, attributes: attributes, context: nil)
-        overviewTextViewHeightConstraint?.constant = estimateRect.width
+        overviewTextViewHeightConstraint?.constant = estimateRect.height + 60
     }
     
     

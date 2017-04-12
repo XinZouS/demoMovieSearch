@@ -111,6 +111,8 @@ class SearchDisplayController: UICollectionViewController, UICollectionViewDeleg
         collectionView?.contentInset = UIEdgeInsets(top: 40, left: 0, bottom: 0, right: 0)
         collectionView?.scrollIndicatorInsets = UIEdgeInsets(top: 40, left: 0, bottom: 5, right: 0)
         collectionView?.alwaysBounceVertical = true
+        (collectionView?.collectionViewLayout as! UICollectionViewFlowLayout).scrollDirection = .vertical
+        collectionView?.addConstraints(left: view.leftAnchor, top: view.topAnchor, right: view.rightAnchor, bottom: view.bottomAnchor, leftConstent: 0, topConstent: 0, rightConstent: 0, bottomConstent: 0, width: 0, height: 0)
     }
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
         collectionView?.collectionViewLayout.invalidateLayout()
